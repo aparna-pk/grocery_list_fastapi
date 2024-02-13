@@ -5,3 +5,4 @@ class GroceryListUserDto(BaseModel):
 
     user_name: str
     password: str
+    email: str

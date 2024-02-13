@@ -11,10 +11,11 @@ from src.entity.grocery_list_user_entity import GroceryListUserEntity
 
 class GroceryListRepository:
     @staticmethod
-    def user_signup(username: str, password: str):
+    def user_signup(username: str, password: str, email: str):
         user_details = GroceryListUserEntity(
             user_name=username,
-            password=get_password_hash(password)
+            password=get_password_hash(password),
+            email=email
         )
         session.add(user_details)
         session.commit()
@@ -52,3 +53,10 @@ class GroceryListRepository:
         if not list_details:
             raise HTTPException(status_code=400, detail="list not exist")
         return list_details
+
+    @staticmethod
+    def login(username: str, password: str):
+        result = session.query(GroceryListUserEntity).filter_by(user_name=username, user_id=get_password_hash(password))
+        if not result:
+            raise HTTPException(status_code=400, detail="user not found")
+        return {"message": "successfully login"}

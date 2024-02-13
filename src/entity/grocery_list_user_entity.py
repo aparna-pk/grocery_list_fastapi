@@ -10,5 +10,6 @@ class GroceryListUserEntity(Base):
     user_id = Column(Integer, primary_key=True, autoincrement=True)
     user_name = Column(String, nullable=False)
     password = Column(String, nullable=False)
+    email = Column(String, nullable=True)
 
 
