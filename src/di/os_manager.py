@@ -14,3 +14,8 @@ HOST = os.getenv("HOST")
 JWT_SECRET = os.getenv("SECRET")
 JWT_ALGORITHM = os.getenv("ALGORITHM")
 
+
+FILE_PATH = os.path
+UPLOAD_PATH = os.getenv("UPLOAD_FOLDER")
+# Create the uploads directory if it doesn't exist
+os.makedirs(UPLOAD_PATH, exist_ok=True)

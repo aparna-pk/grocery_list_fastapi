@@ -50,3 +50,4 @@ def access_token_from_refresh_token(refresh_token: str = Header()):
     if not user:
         raise HTTPException(status_code=400, detail="Invalid refresh token")
     return user
+

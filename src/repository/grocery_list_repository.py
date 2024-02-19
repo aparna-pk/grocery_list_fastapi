@@ -1,25 +1,33 @@
 from typing import List, Optional
 
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 
-from src.authentication.authentication import get_password_hash, get_current_user
-from src.database.db_connection import session
+from src.authentication.authentication import get_password_hash
+from src.database.db_connection import session, engine, Base
+from src.di.os_manager import FILE_PATH, UPLOAD_PATH
 from src.dto.grocery_list_dto import GroceryList
+from src.dto.grocery_list_user_dto import GroceryListUserDto, ChangePassword
 from src.entity.grocery_list_entity import GroceryListEntity
 from src.entity.grocery_list_user_entity import GroceryListUserEntity
+from src.entity.token_black_list import TokenBlacklist
+
+Base.metadata.create_all(bind=engine)
 
 
 class GroceryListRepository:
     @staticmethod
-    def user_signup(username: str, password: str, email: str):
+    def user_signup(user_details: GroceryListUserDto):
         user_details = GroceryListUserEntity(
-            user_name=username,
-            password=get_password_hash(password),
-            email=email
+            user_name=user_details.user_name,
+            password=get_password_hash(user_details.password),
+            email=user_details.email
         )
-        session.add(user_details)
-        session.commit()
-        return {"message": "user successfully added"}
+        try:
+            session.add(user_details)
+            session.commit()
+            return {"message": "user successfully added"}
+        except HTTPException:
+            raise HTTPException(status_code=400, detail="something went wrong")
 
     @staticmethod
     def add_list_details(list_data: GroceryList, user_id: int):
@@ -55,8 +63,37 @@ class GroceryListRepository:
         return list_details
 
     @staticmethod
-    def login(username: str, password: str):
-        result = session.query(GroceryListUserEntity).filter_by(user_name=username, user_id=get_password_hash(password))
+    def change_password(data: ChangePassword):
+        result = session.query(GroceryListUserEntity).filter_by(email=data.email).first()
+        if result:
+            result.password = get_password_hash(data.new_password)
+            session.commit()
         if not result:
             raise HTTPException(status_code=400, detail="user not found")
-        return {"message": "successfully login"}
+        return {"message": "successfully updated"}
+
+    @staticmethod
+    def logout(token: str):
+        # Add the token to the blacklist
+        db_token = TokenBlacklist(token=token)
+        # try:
+        session.add(db_token)
+        session.commit()
+        return {"message": "successfully logout"}
+        # except HTTPException:
+        #     raise HTTPException(status_code=400, detail="something went wrong")
+
+    async def upload_file(file: UploadFile):
+        file_folder = FILE_PATH.join(UPLOAD_PATH, file.filename)
+        with open(file_folder, "wb") as destination:
+            destination.write(await file.read())
+        return {"filename": file.filename}
+
+    async def read_file(file_name: str):
+        file_folder = FILE_PATH.join(UPLOAD_PATH, file_name)
+        try:
+            with open(file_folder, "r") as file:
+                content = file.read()
+            return {"file_content": content }
+        except FileNotFoundError:
+            return {"message": "File not found"}

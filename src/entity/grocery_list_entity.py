@@ -1,12 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.declarative import declarative_base
+
+from src.database.db_connection import Base
+from src.entity.base_mixin import BaseMixin
 
 
-Base = declarative_base()
-
-
-class GroceryListEntity(Base):
+class GroceryListEntity(Base, BaseMixin):
     __tablename__ = 'grocery_list'
 
     list_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -14,6 +13,3 @@ class GroceryListEntity(Base):
     list_name = Column(String, nullable=False)
     list_items = Column(JSONB, nullable=False)
     user_id = Column(Integer)
-
-
-
